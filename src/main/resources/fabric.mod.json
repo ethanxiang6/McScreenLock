@@ -1,0 +1,20 @@
+{
+	"schemaVersion": 1,
+	"id": "lockon",
+	"version": "${version}",
+	"name": "Lock On",
+	"description": "Press a key to lock your view onto the player you're looking at. Press it again to unlock.",
+	"authors": ["ethanxiang6"],
+	"license": "MIT",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["com.ethanxiang6.lockon.LockOnClient"]
+	},
+	"mixins": ["lockon.mixins.json"],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
