@@ -1,0 +1,115 @@
+package dbrighthd.elytratrails;
+
+import dbrighthd.elytratrails.compat.Compatibility;
+import dbrighthd.elytratrails.config.ConfigManager;
+import dbrighthd.elytratrails.config.ModConfig;
+import dbrighthd.elytratrails.config.pack.TrailPackConfigManager;
+import dbrighthd.elytratrails.handler.CommandHandler;
+import dbrighthd.elytratrails.handler.ParticleHandler;
+import dbrighthd.elytratrails.network.RegisterPacketsClient;
+import dbrighthd.elytratrails.rendering.TrailPipelines;
+import dbrighthd.elytratrails.rendering.TrailSystem;
+import dbrighthd.elytratrails.rendering.TrailTextureRegistry;
+import dbrighthd.elytratrails.twirling.EaseTypes;
+import dbrighthd.elytratrails.twirling.TwirlManager;
+import dbrighthd.elytratrails.util.ElytraTimeUtil;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.ResourcePackActivationType;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.ResourceManager;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
+
+import static dbrighthd.elytratrails.compat.ModStatuses.EMF_LOADED;
+import static dbrighthd.elytratrails.compat.emf.EmfAnimationHooks.registerAnimationVariables;
+import static dbrighthd.elytratrails.compat.emf.EmfTrailSpawnerRegistry.onResourceReload;
+import static dbrighthd.elytratrails.network.ClientPlayerConfigStore.refreshLocalConfigs;
+import static dbrighthd.elytratrails.api.APIExample.RegisterExampleAPIHook;
+
+
+@SuppressWarnings("deprecation")
+public class ElytraTrailsClient implements ClientModInitializer {
+    private static ModConfig modConfig;
+
+    @Override
+    public void onInitializeClient() {
+        ConfigManager.load();
+        refreshConfig();
+        ElytraTimeUtil.init();
+        Compatibility.init();
+        ElytraTrailsKeybind.init();
+        TrailPipelines.init();
+        TrailSystem.init();
+        ParticleHandler.init();
+        refreshLocalConfigs();
+        RegisterPacketsClient.initClient();
+        CommandHandler.init();
+        EaseTypes.registerTypes();
+        TwirlManager.Init();
+        TrailPackConfigManager.setDefaultSampleSettings();
+        RegisterExampleAPIHook();
+        if(EMF_LOADED)
+        {
+            registerAnimationVariables();
+        }
+        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(
+                new SimpleSynchronousResourceReloadListener() {
+                    @Override
+                    public @NotNull Identifier getFabricId() {
+                        return Objects.requireNonNull(Identifier.tryParse("elytratrails:trail_pack_configs"));
+                    }
+
+                    @Override
+                    public void onResourceManagerReload(@NotNull ResourceManager manager) {
+                        TrailTextureRegistry
+                                .reloadNow(manager);
+
+                        TrailSystem.getWingtipSampler().removeAllEmfCache();
+                        if (FabricLoader.getInstance().isModLoaded("entity_model_features")) {
+                            onResourceReload();
+                        }
+                        TrailPackConfigManager.reloadPresets(manager);
+                        TrailPackConfigManager.reload(manager);
+                        TrailSystem.getTrailManager().removeAllTrails();
+                    }
+                }
+        );
+        FabricLoader.getInstance().getModContainer("elytratrails").ifPresent(container -> ResourceManagerHelper.registerBuiltinResourcePack(
+                Identifier.fromNamespaceAndPath("elytratrails", "arrowtrails"),
+                container,
+                Component.literal("Arrow Trails"),
+                ResourcePackActivationType.NORMAL
+        ));
+        FabricLoader.getInstance().getModContainer("elytratrails").ifPresent(container -> ResourceManagerHelper.registerBuiltinResourcePack(
+                Identifier.fromNamespaceAndPath("elytratrails", "allaytrails"),
+                container,
+                Component.literal("Allay Trails"),
+                ResourcePackActivationType.NORMAL
+        ));
+        FabricLoader.getInstance().getModContainer("elytratrails").ifPresent(container -> ResourceManagerHelper.registerBuiltinResourcePack(
+                Identifier.fromNamespaceAndPath("elytratrails", "xptrails"),
+                container,
+                Component.literal("Experience Orb Trails"),
+                ResourcePackActivationType.NORMAL
+        ));
+    }
+
+    //eventually this call will be replaced with the call directly from ConfigManager
+    public static ModConfig getConfig() {
+        return modConfig;
+    }
+
+    public static void setConfig(ModConfig modConfig) {
+        ConfigManager.save(modConfig);
+    }
+
+    public static void refreshConfig() {
+        modConfig = ConfigManager.getConfig();
+    }
+}

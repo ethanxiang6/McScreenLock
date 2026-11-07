@@ -1,0 +1,93 @@
+package dbrighthd.elytratrails.handler;
+
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.context.CommandContext;
+import dbrighthd.elytratrails.config.pack.TrailPackConfigManager;
+import dbrighthd.elytratrails.network.GetAllRequestC2SPayload;
+import dbrighthd.elytratrails.rendering.TrailSystem;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.EntityType;
+
+import static dbrighthd.elytratrails.network.ClientPlayerConfigStore.CLIENT_PLAYER_CONFIGS;
+
+/**
+ * Sets up some handy client commands
+ */
+public class CommandHandler {
+    public static void init() {
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> dispatcher.register(
+                ClientCommands.literal("elytratrails").then(ClientCommands.literal("debug")
+                        .executes(CommandHandler::debugCommand))
+        ));
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> dispatcher.register(
+                ClientCommands.literal("elytratrails").then(ClientCommands.literal("debugmoverrides")
+                        .executes(CommandHandler::debugOverridesCommand))
+        ));
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> dispatcher.register(
+                ClientCommands.literal("elytratrails").then(ClientCommands.literal("debugmodels")
+                        .executes(CommandHandler::debugModelsCommand))
+        ));
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> dispatcher.register(
+                ClientCommands.literal("elytratrails")
+                        .then(ClientCommands.literal("clear")
+                                .executes(CommandHandler::clearCommand))
+        ));
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> dispatcher.register(
+                ClientCommands.literal("elytratrails")
+                        .then(ClientCommands.literal("getconfigs")
+                                .executes(CommandHandler::requestTrailConfigs))
+        ));
+    }
+
+    private static int clearCommand(CommandContext<FabricClientCommandSource> context) {
+        int trailcount = TrailSystem.getTrailManager().trailsNumber();
+        int activetrailcount = TrailSystem.getTrailManager().activeTrailsNumber();
+        TrailSystem.getTrailManager().removeAllTrails();
+
+        context.getSource().sendFeedback(
+                Component.literal("Cleared " + trailcount + " trails, " + activetrailcount + " of which were active.")
+        );
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int debugCommand(CommandContext<FabricClientCommandSource> context) {
+        int trailcount = TrailSystem.getTrailManager().trailsNumber();
+        int activetrailcount = TrailSystem.getTrailManager().activeTrailsNumber();
+        context.getSource().sendFeedback(Component.literal("Stored Configs: " + CLIENT_PLAYER_CONFIGS.size()));
+        for (var pair : CLIENT_PLAYER_CONFIGS.entrySet()) {
+            context.getSource().sendFeedback(Component.literal(pair.getValue().playerName()));
+        }
+        context.getSource().sendFeedback(Component.literal("Current Trails: " + trailcount));
+        context.getSource().sendFeedback(Component.literal("Active Trails:  " + activetrailcount));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int debugOverridesCommand(CommandContext<FabricClientCommandSource> context) {
+        context.getSource().sendFeedback(Component.literal("Current Model Overrides: "));
+
+        for (String model : TrailPackConfigManager.getModelStrings()) {
+            context.getSource().sendFeedback(Component.literal(model));
+
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int debugModelsCommand(CommandContext<FabricClientCommandSource> context) {
+        context.getSource().sendFeedback(Component.literal("Current Models With Trails Defined: "));
+
+        for (EntityType<?> entityType : TrailPackConfigManager.entitiesWithTrails) {
+            context.getSource().sendFeedback(Component.literal(entityType.toShortString()));
+
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int requestTrailConfigs(CommandContext<FabricClientCommandSource> context) {
+        ClientPlayNetworking.send(new GetAllRequestC2SPayload());
+        return Command.SINGLE_SUCCESS;
+    }
+}

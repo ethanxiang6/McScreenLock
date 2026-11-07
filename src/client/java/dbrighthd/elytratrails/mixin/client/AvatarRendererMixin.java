@@ -1,0 +1,37 @@
+package dbrighthd.elytratrails.mixin.client;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import dbrighthd.elytratrails.twirling.TwirlManager;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.entity.player.AvatarRenderer;
+import net.minecraft.client.renderer.entity.state.AvatarRenderState;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import static dbrighthd.elytratrails.ElytraTrailsClient.getConfig;
+
+/**
+ * This is what handles the rotations during twirls.
+ */
+@Mixin(AvatarRenderer.class)
+public abstract class AvatarRendererMixin {
+
+    @Inject(
+            method = "setupRotations(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;FF)V",
+            at = @At("TAIL")
+    )
+    private void elytratrails$addSpinRoll(AvatarRenderState state, PoseStack poseStack, float f, float g, CallbackInfo ci) {
+        if (!getConfig().enableTwirls) {
+            return;
+        }
+        if (!state.isFallFlying) return;
+
+        float extra = TwirlManager.getExtraRollRadians(state.id, Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
+        if (extra != 0f) {
+            poseStack.mulPose(TwirlManager.getAxis(state.id).rotation(extra));
+        }
+    }
+}
+

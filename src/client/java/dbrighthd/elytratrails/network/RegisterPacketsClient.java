@@ -1,0 +1,81 @@
+package dbrighthd.elytratrails.network;
+
+import dbrighthd.elytratrails.rendering.TrailSystem;
+import dbrighthd.elytratrails.twirling.TwirlManager;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.Minecraft;
+
+import static dbrighthd.elytratrails.ElytraTrailsClient.getConfig;
+import static dbrighthd.elytratrails.network.ClientPlayerConfigStore.CLIENT_PLAYER_CONFIGS;
+import static dbrighthd.elytratrails.network.ClientPlayerConfigStore.getLocalPlayerConfigToSend;
+
+public class RegisterPacketsClient {
+    @Environment(EnvType.CLIENT)
+    public static boolean hasRecievedThisSession = false;
+    private static int pendingConfigRequestTicks = -1;
+
+    public static void initClient() {
+        ClientPlayNetworking.registerGlobalReceiver(NetworkTwirlS2CPayload.ID, (payload, _) ->
+                TwirlManager.receiveTwirlPacket(payload.entityId(), payload.networkTwirl()));
+        ClientPlayNetworking.registerGlobalReceiver(PlayerConfigS2CPayload.ID, (payload, _) ->
+        {
+            TrailSystem.getTrailManager().stopTrail(payload.entityId());
+            ClientPlayerConfigStore.putSafeInitial(payload.entityId(), payload.configTag());
+        });
+        ClientPlayNetworking.registerGlobalReceiver(RemoveFromStoreS2CPayload.ID, (payload, _) ->
+        {
+            if (CLIENT_PLAYER_CONFIGS.containsKey(payload.entityId())) {
+                ClientPlayerConfigStore.CLIENT_PLAYER_CONFIGS.remove(payload.entityId());
+            }
+            TrailSystem.getWingtipSampler().removeFromEmfCache(payload.entityId());
+        });
+        ClientPlayNetworking.registerGlobalReceiver(ServerTrailsStatusS2CPayload.ID, (payload, _) ->
+        {
+            boolean enabled = payload.enabled();
+            ClientPlayerConfigStore.serverTrailsEnabled = enabled;
+            if(!enabled)
+            {
+                TrailSystem.getTrailManager().stopAllTrails();
+            }
+        });
+        ClientPlayNetworking.registerGlobalReceiver(LegacyPlayerConfigS2CPayload.ID, (_, _) ->
+        {
+            if (!hasRecievedThisSession) {
+                assert Minecraft.getInstance().player != null;
+                Minecraft.getInstance().player.sendSystemMessage(
+                        net.minecraft.network.chat.Component.literal("§cThe server is using an outdated ElytraTrails mod or plugin. Please ask the server owner to update it to at least version 1.4.0 to work with your client.")
+                );
+            }
+            hasRecievedThisSession = true;
+        });
+        ClientPlayConnectionEvents.JOIN.register((_, _, _) -> {
+            if (getConfig().shareTrail || !getConfig().showTrailToOtherPlayers) {
+                ClientPlayNetworking.send(new PlayerConfigC2SPayload(getLocalPlayerConfigToSend().toTag()));
+            }
+
+            pendingConfigRequestTicks = 10;
+        });
+
+        ClientTickEvents.END_CLIENT_TICK.register(_ -> {
+            if (pendingConfigRequestTicks > 0) {
+                pendingConfigRequestTicks--;
+                if (pendingConfigRequestTicks == 0) {
+                    if(Minecraft.getInstance().level != null)
+                    {
+                        ClientPlayNetworking.send(new GetAllRequestC2SPayload());
+                    }
+                }
+            }
+        });
+        ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> {
+            TrailSystem.getWingtipSampler().removeAllEmfCache();
+            ClientPlayerConfigStore.serverTrailsEnabled = true;
+            hasRecievedThisSession = false;
+            CLIENT_PLAYER_CONFIGS.clear();
+        });
+    }
+}
