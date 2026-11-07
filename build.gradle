@@ -1,0 +1,49 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version '1.16-SNAPSHOT'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	mavenLocal()
+	maven { url = "https://maven.nucleoid.xyz/releases" }
+	maven { url = "https://maven.gnomecraft.net/releases/" }
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+	compileOnly localRuntime("net.fabricmc:fabric-loader:${project.loader_version}")
+	compileOnly localRuntime("net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}")
+
+	// Trinkets Updated (provides the "trinkets" mod id). Not bundled.
+	compileOnly localRuntime("eu.pb4:trinkets:${project.trinkets_version}")
+	compileOnly localRuntime("dev.yumi.mc.core:yumi-mc-foundation:${project.yumi_version}")
+
+	// Inventory HUD+ is "All Rights Reserved", so it is deliberately NOT on the compile classpath.
+	// The mixin targets its classes by name.
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.encoding = "UTF-8"
+	it.options.release = 25
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}

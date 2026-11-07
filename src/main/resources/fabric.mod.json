@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "inventoryhud_trinkets_elytra",
+  "version": "${version}",
+  "name": "Inventory HUD+ Trinkets Elytra",
+  "description": "Shows the elytra worn in the Trinkets cape slot (and its durability) in Inventory HUD+'s block armor view.",
+  "authors": ["Ethan"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {},
+  "mixins": ["inventoryhud_trinkets_elytra.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.19.0",
+    "fabric-api": "*",
+    "inventoryhud": ">=3.4.0",
+    "trinkets": ">=4.1.0",
+    "minecraft": "26.2.x",
+    "java": ">=25"
+  }
+}

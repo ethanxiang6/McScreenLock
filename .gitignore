@@ -1,0 +1,4 @@
+build/
+.gradle/
+trinkets-src/
+*.log
