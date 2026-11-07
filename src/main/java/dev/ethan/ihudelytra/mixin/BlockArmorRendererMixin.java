@@ -22,7 +22,7 @@ public abstract class BlockArmorRendererMixin {
     public boolean showArmor;
 
     @Shadow
-    private int renderSlot(GuiGraphicsExtractor graphics, int x, int y, ItemStack stack, int slotType, int seed);
+    protected abstract int renderSlot(GuiGraphicsExtractor graphics, int x, int y, ItemStack stack, int slotType, int seed);
 
     // renderItems(graphics, armorOnRight): armor column is at x=75 (right-aligned) or x=0; rows are 18px apart, boots at y=54
     @Inject(method = "renderItems", at = @At("TAIL"))
