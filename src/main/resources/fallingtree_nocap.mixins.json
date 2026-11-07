@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "dev.ethan.ftnocap.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "TreeConfigurationMixin",
+    "TreeProxyConfigurationMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

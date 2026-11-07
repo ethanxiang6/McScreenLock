@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "fallingtree_nocap",
+  "version": "${version}",
+  "name": "FallingTree No Scan Cap",
+  "description": "Removes FallingTree's maximum scan size (default 500) so trees of any size can be felled.",
+  "authors": ["Ethan"],
+  "license": "MIT",
+  "environment": "*",
+  "mixins": ["fallingtree_nocap.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.19.0",
+    "fallingtree": "*",
+    "minecraft": "26.2.x",
+    "java": ">=25"
+  }
+}
