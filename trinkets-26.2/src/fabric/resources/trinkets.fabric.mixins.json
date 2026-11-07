@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "eu.pb4.trinkets.mixin.fabric",
+  "compatibilityLevel": "JAVA_25",
+  "mixinextras": {
+    "minVersion": "0.5.0"
+  },
+  "mixins": [
+    "ItemStackMixin",
+    "behaviour.LivingEntityMixin"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,0 +1,48 @@
+These are changes for 4.0.0 release, compared to 3.11.0.
+Already done:
+- Updated to 26.1.2
+- Remapped to Mojmap
+- Changed package from dev.emi.trinkets to eu.pb4.trinkets
+- Renamed TrinketItem, you should use tags, component and TrinketCallback instead.
+- Renamed Trinket to TrinketCallback
+- Methods to get/set the Trinket(Callback) were moved from TrinketsAPI to TrinketCallback.
+- Moved non-api classes to .impl package
+- TrinketEnums.DropRule -> TrinketDropRule
+- TrinketComponent -> TrinketAttachment
+- New trinket equipment predicates:
+  - trinkets:default -> allows the component and the tag to define the slot item is allowed in.
+  - trinket:component -> allows the component to define the slot item is allowed in.
+- Changed default predicates from `trinket:tag` to `trinkets:default`
+- SlotAttributes was reworked and no longer depends on unregistered attribute instances:
+  - Instead it provides a method that will register / retrieve an attribute to use statically.
+- Reworked slot icons to work more like vanilla:
+  - Icons no longer have a background.
+  - Moved icon files from 'namespace:textures/gui/slots' to 'namespace:textures/gui/sprites/container/slots'
+  - Ids however should change from 'namespace:gui/slots' to 'namespace:container/slots'
+- Slot count is only calculated on server and sent from it.
+- Events now use the Yumi Framework over Fabric one (as pre-requisite of neoforge support)
+- Predicates can now work as an AND and OR logic in json, by using objects with "and" key or "or" key. These can be nested as much as one needs.
+- Dropped dependency on Cardinal Components API.
+- Added support for NeoForge Mod Loader
+- minecraft:piglin_safe_armor tag now works on trinkets.
+- Glider component now works correctly in trinkets slots (no visual change for things like wings yet!).
+- Fixed tags in trinkets entity slot definition.
+- A bunch of logic fixes for slot resizing and item removal.
+- Trinkets now has a config file (no ui yet), to toggle some features:
+  - Extra slot indicator (disabled by default).
+- Slot name now displays even if callback prevents equipment.
+  - It will however change the color from blue to dark gray.
+- Data Driven Trinket Rendering in addition to improved compatibility for code-driven one:
+  - https://github.com/Patbox/trinkets/wiki/Data-Driven-Trinket-rendering-asset-definition.
+- More configurability for the library users / players
+- Support for rendering trinkets in first person hand
+- Improved mod compatibility
+- Builtin datagen utilities
+- Additional events allowing more control over trinket
+- Non-active/Visual only trinkets/slots types
+- Hidded slot type
+- Support death protection component out of the box (datapack required to allow items to be but in slot)
+- And more... see changelogs for everything!
+
+Planned:
+- General implementation cleanup

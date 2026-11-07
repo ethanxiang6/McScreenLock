@@ -1,0 +1,196 @@
+package eu.pb4.trinkets.api.callback;
+
+import eu.pb4.trinkets.api.TrinketDropRule;
+import eu.pb4.trinkets.api.TrinketSlotAccess;
+import eu.pb4.trinkets.api.TrinketsApi;
+import eu.pb4.trinkets.api.component.TrinketDataComponents;
+import eu.pb4.trinkets.impl.TrinketInventoryImpl;
+import eu.pb4.trinkets.impl.TrinketsMain;
+import eu.pb4.trinkets.mixin.client.accessor.LivingEntityAccessor;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.equipment.Equippable;
+
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
+public interface TrinketCallback {
+    TrinketCallback DEFAULT = new TrinketCallback() {
+    };
+
+    static TrinketCallback getCallback(ItemStack item) {
+        var value = item.get(TrinketDataComponents.EQUIPMENT);
+        if (value != null) {
+            // Todo
+            //return value.callback();
+        }
+
+        if (item.getItem() instanceof TrinketCallback callback) {
+            return callback;
+        }
+
+        return TrinketsMain.CALLBACKS.getOrDefault(item.getItem(), DEFAULT);
+    }
+
+    static void setCallback(Item item, TrinketCallback callback) {
+        TrinketsMain.CALLBACKS.put(item, callback);
+    }
+
+    /**
+     * Called every tick on the client and server side
+     *
+     * @param stack The stack being ticked
+     * @param slot The slot the stack is ticking in
+     * @param entity The entity wearing the stack
+     */
+    default void tick(ItemStack stack, TrinketSlotAccess slot, LivingEntity entity) {
+    }
+
+    /**
+     * Called when an entity equips a trinket
+     *
+     * @param stack The stack being equipped
+     * @param slot The slot the stack is equipped to
+     * @param entity The entity that equipped the stack
+     */
+    default void onEquip(ItemStack stack, TrinketSlotAccess slot, LivingEntity entity) {
+    }
+
+    /**
+     * Called when an entity equips a trinket
+     *
+     * @param stack The stack being unequipped
+     * @param slot The slot the stack was unequipped from
+     * @param entity The entity that unequipped the stack
+     */
+    default void onUnequip(ItemStack stack, TrinketSlotAccess slot, LivingEntity entity) {
+    }
+
+    /**
+     * Determines whether an entity can equip a trinket
+     *
+     * @param stack The stack being equipped
+     * @param slot The slot the stack is being equipped to
+     * @param entity The entity that is equipping the stack
+     * @return Whether the stack can be equipped
+     */
+    default boolean canEquip(ItemStack stack, TrinketSlotAccess slot, LivingEntity entity) {
+        return true;
+    }
+
+    /**
+     * Determines whether an entity can unequip a trinket
+     *
+     * @param stack The stack being unequipped
+     * @param slot The slot the stack is being unequipped from
+     * @param entity The entity that is unequipping the stack
+     * @return Whether the stack can be unequipped
+     */
+    default boolean canUnequip(ItemStack stack, TrinketSlotAccess slot, LivingEntity entity) {
+        return !EnchantmentHelper.has(stack, EnchantmentEffectComponents.PREVENT_ARMOR_CHANGE) || (entity instanceof Player player && player.isCreative());
+    }
+
+    /**
+     * Determines whether a trinket can automatically attempt to equip into the first available
+     * slot when used
+     *
+     * @param stack The stack being equipped
+     * @param entity The entity that is using the stack
+     * @return Whether the stack can be equipped from use
+     */
+    default boolean canEquipFromUse(ItemStack stack, LivingEntity entity) {
+        var comp = stack.get(TrinketDataComponents.EQUIPMENT);
+        return comp != null && comp.equipOnInteract();
+    }
+
+    /**
+     * Determines the equip sound of a trinket
+     *
+     * @param stack The stack for the equip sound
+     * @param slot The slot the stack is being equipped to
+     * @param entity The entity that is equipping the stack
+     * @return The {@link SoundEvent} to play for equipping
+     */
+    default Holder<SoundEvent> getEquipSound(ItemStack stack, TrinketSlotAccess slot, LivingEntity entity) {
+        var trinket = stack.get(TrinketDataComponents.EQUIPMENT);
+        if (trinket != null) {
+            return trinket.equipSound();
+        }
+
+        Equippable component = stack.get(DataComponents.EQUIPPABLE);
+        if (component != null) {
+            return component.equipSound();
+        }
+        return SoundEvents.ARMOR_EQUIP_GENERIC;
+    }
+
+    /**
+     * Provides the Entity Attribute Modifiers for a stack in a slot. Child implementations should
+     * remain pure
+     * <p>
+     * If modifiers do not change based on stack, slot, or entity, caching based on passed identifier
+     * should be considered
+     *
+     * @param stack ItemStack being polled for modifiers
+     * @param slot the {@link TrinketSlotAccess} for the {@link eu.pb4.trinkets.api.TrinketInventory} the Trinket is relevant to
+     * @param entity the LivingEntity holding the Trinket
+     * @param slotIdentifier The Identifier to use for creating attributes
+     * @param consumer the consumer of attributes
+     */
+    default void forEachTrinketModifier(ItemStack stack, TrinketSlotAccess slot, LivingEntity entity, Identifier slotIdentifier, BiConsumer<Holder<Attribute>, AttributeModifier> consumer) {
+
+    }
+
+    /**
+     * Called by Trinkets when a trinket is broken on the client if {@link TrinketsApi#onTrinketBroken}
+     * is called by the callback in {@link ItemStack#hurtAndBreak(int, ServerLevel, ServerPlayer, Consumer)} server side
+     * <p>
+     * The default implementation works the same as breaking vanilla equipment, a sound is played and
+     * particles are spawned based on the item
+     *
+     * @param stack The stack being broken
+     * @param slot The slot the stack is being broken in
+     * @param entity The entity that is breaking the stack
+     */
+    default void onBreak(ItemStack stack, TrinketSlotAccess slot, LivingEntity entity) {
+        ((LivingEntityAccessor) entity).trinkets$BreakItem(stack);
+    }
+
+    default TrinketDropRule getDropRule(ItemStack stack, TrinketSlotAccess slot, LivingEntity entity) {
+        var trinket = stack.get(TrinketDataComponents.EQUIPMENT);
+        if (trinket != null) {
+            return trinket.dropRule();
+        }
+
+        return TrinketDropRule.DEFAULT;
+    }
+
+    default void onEquippedStackChanged(ItemStack previous, ItemStack newStack, TrinketSlotAccess slot, LivingEntity entity) {
+
+    }
+
+    /**
+     * Controls whatever this trinket can apply extra effects, be it from Trinket's itself (for example glider components)
+     * or by other mods.
+     *
+     * @param stack The stack being broken
+     * @param slot The slot the stack is being broken in
+     * @param entity The entity that is breaking the stack
+     */
+    default boolean canApplyEffects(ItemStack stack, TrinketSlotAccess slot, LivingEntity entity) {
+        return true;
+    }
+}

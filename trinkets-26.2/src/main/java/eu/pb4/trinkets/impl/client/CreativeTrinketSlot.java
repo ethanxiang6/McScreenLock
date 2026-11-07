@@ -1,0 +1,82 @@
+package eu.pb4.trinkets.impl.client;
+
+import eu.pb4.trinkets.api.SlotGroup;
+import eu.pb4.trinkets.api.SlotType;
+import eu.pb4.trinkets.api.TrinketSlotAccess;
+import eu.pb4.trinkets.impl.slots.SurvivalTrinketSlot;
+import eu.pb4.trinkets.impl.slots.TrinketSlot;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen.SlotWrapper;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import org.jspecify.annotations.Nullable;
+
+/**
+ * A gui slot for a trinket slot in the creative inventory
+ */
+@Environment(EnvType.CLIENT)
+public class CreativeTrinketSlot extends SlotWrapper implements TrinketSlot {
+	private final SurvivalTrinketSlot original;
+
+	public CreativeTrinketSlot(SurvivalTrinketSlot original, int s, int x, int y) {
+		super(original, s, x, y);
+		this.original = original;
+	}
+
+	@Override
+	public boolean isTrinketFocused() {
+		return original.isTrinketFocused();
+	}
+
+	@Override
+	public boolean renderAfterRegularSlots() {
+		return original.renderAfterRegularSlots();
+	}
+
+	@Override
+	public SlotType getType() {
+		return original.getType();
+	}
+
+	@Override
+	public TrinketSlotAccess getAccess() {
+		return this.original.getAccess();
+	}
+
+	@Override
+	public SlotGroup getGroup() {
+		return this.original.getGroup();
+	}
+
+	@Override
+	public LivingEntity getOwner() {
+		return this.original.getOwner();
+	}
+
+	@Override
+	public boolean isDecorativeMode() {
+		return this.original.isDecorativeMode();
+	}
+
+	@Override
+	public @Nullable Identifier getNoItemIcon() {
+		return original.getNoItemIcon();
+	}
+
+	@Override
+	public int getMaxStackSize(ItemStack itemStack) {
+		return this.original.getMaxStackSize(itemStack);
+	}
+
+	@Override
+	public int getMaxStackSize() {
+		return this.original.getMaxStackSize();
+	}
+
+	@Override
+	public ItemStack getTrinketGhostItem() {
+		return this.original.getTrinketGhostItem();
+	}
+}

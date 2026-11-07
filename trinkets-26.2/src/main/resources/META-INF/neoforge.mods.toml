@@ -1,0 +1,51 @@
+modLoader = "javafml"
+loaderVersion = "[2,)"
+license = "MIT"
+issueTrackerURL = "https://github.com/Patbox/Trinkets/issues"
+
+[[mods]]
+	modId = "trinkets_updated"
+	version = "${version}"
+	displayName = "Trinkets Updated"
+	description = "Adds a data-driven accessory system to Minecraft"
+	authors = "Emi, C4, Patbox"
+	logoFile = "assets/trinkets/icon.png"
+	logoBlur = false
+	iconFile = "assets/trinkets/icon.png"
+	displayURL = "https://pb4.eu"
+	issueTrackerURL = "https://github.com/Patbox/Trinkets/issues"
+	updateJSONURL = "https://api.modrinth.com/updates/XaT8sLP6/forge_updates.json"
+	rrv_client = "eu.pb4.trinkets.impl.client.compat.TrinketsRRVPlugin"
+
+[[accessTransformers]]
+	file = "META-INF/accesstransformer.cfg"
+
+[[mixins]]
+	config = "trinkets.mixins.json"
+
+[[mixins]]
+	config = "trinkets.neo.mixins.json"
+
+[[dependencies.trinkets_updated]]
+	modId = "minecraft"
+	type = "required"
+	versionRange = "[26.2,26.3)"
+	ordering = "NONE"
+	side = "BOTH"
+
+[[dependencies.trinkets_updated]]
+	modId = "yumi_mc_core"
+	type = "required"
+	versionRange = "[${yumi_version},)"
+	ordering = "NONE"
+	side = "CLIENT"
+
+[modproperties.trinkets_updated]
+	catalogueImageIcon = "assets/trinkets/icon.png"
+
+[[modproperties.trinkets_updated."yumi:entrypoints"."yumi:init"]]
+	value = "eu.pb4.trinkets.impl.TrinketsMain"
+
+[[modproperties.trinkets_updated."yumi:entrypoints"."yumi:client_init"]]
+	value = "eu.pb4.trinkets.impl.client.TrinketsClient"
+

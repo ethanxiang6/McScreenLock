@@ -1,0 +1,212 @@
+package eu.pb4.trinkets.api;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.ApiStatus;
+import org.jspecify.annotations.Nullable;
+
+@ApiStatus.NonExtendable
+public interface TrinketAttachment {
+
+	LivingEntity getEntity();
+
+	/**
+	 * @return A map of names to slot groups available to the entity
+	 */
+	Map<String, SlotGroup> getGroups();
+
+	/**
+	 * @return A map of slot ids to trinket inventories
+	 * for the entity. Inventories will respect EAM slot count modifications for
+	 * the entity.
+	 */
+	Map<String, TrinketInventory> getInventories();
+
+	/**
+	 * @return a specific inventory based on the provided slotId.
+	 */
+	@Nullable
+	TrinketInventory getInventory(String slotId);
+
+	/**
+	 * @return A instance of TrinketSlotAccess. It might get invalidated in the future!
+	 */
+	@Nullable
+	default TrinketSlotAccess getSlotAccess(String slotId, int slot) {
+		return getSlotAccess(slotId, slot, false);
+	}
+
+	/**
+	 * @return A instance of TrinketSlotAccess. It might get invalidated in the future!
+	 */
+	@Nullable
+	TrinketSlotAccess getSlotAccess(String slotId, int slot, boolean cosmetic);
+
+	/**
+	 * @return A instance of TrinketSlotAccess. It might get invalidated in the future!
+	 */
+	@Nullable
+	default TrinketSlotAccess getSlotAccess(TrinketSlotReference slotReference) {
+		return getSlotAccess(slotReference.slot(), slotReference.index(), slotReference.cosmetic());
+	}
+
+	/**
+	 * @return Whether the predicate matches any slots available to the entity
+	 */
+	default boolean isEquipped(Predicate<ItemStack> predicate) {
+		return isEquipped(predicate, false);
+	}
+
+	/**
+	 * @return Whether the item is in any slots available to the entity
+	 */
+	default boolean isEquipped(Item item) {
+		return isEquipped(stack -> stack.is(item));
+	}
+
+	/**
+	 * @return Whether the item is in any slots available to the entity
+	 */
+	default boolean isEquipped(TagKey<Item> item) {
+		return isEquipped(stack -> stack.is(item));
+	}
+
+	/**
+	 * @return Whether the predicate matches any slots available to the entity
+	 */
+	boolean isEquipped(Predicate<ItemStack> predicate, boolean requireActive);
+
+	/**
+	 * @return Whether the item is in any slots available to the entity
+	 */
+	default boolean isEquipped(Item item, boolean requireActive) {
+		return isEquipped(stack -> stack.is(item), requireActive);
+	}
+
+	/**
+	 * @return Whether the item is in any slots available to the entity
+	 */
+	default boolean isEquipped(TagKey<Item> item, boolean requireActive) {
+		return isEquipped(stack -> stack.is(item), requireActive);
+	}
+
+	/**
+	 * @param predicate predicate to check against when searching for item.
+	 * @param requireActive checks if provided trinket is allowed to apply effects
+	 * @return All slots that match the provided predicate
+	 */
+	List<TrinketSlotAccess> equipped(Predicate<ItemStack> predicate, boolean requireActive);
+
+	/**
+	 * @param requireActive checks if provided trinket is allowed to apply effects
+	 * @return All slots that contain the provided item
+	 */
+	default List<TrinketSlotAccess> equipped(Item item, boolean requireActive) {
+		return equipped(stack -> stack.is(item), requireActive);
+	}
+
+	/**
+	 * @param requireActive checks if provided trinket is allowed to apply effects
+	 * @return All non-empty slots
+	 */
+	default List<TrinketSlotAccess> allEquipped(boolean requireActive) {
+		return equipped(stack -> !stack.isEmpty(), requireActive);
+	}
+
+	/**
+	 * @return All slots that match the provided predicate
+	 */
+	default Optional<TrinketSlotAccess> findFirst(Predicate<ItemStack> predicate) {
+		return this.findFirst(predicate, false);
+	}
+
+	/**
+	 * @return All slots that match the provided predicate
+	 */
+	Optional<TrinketSlotAccess> findFirst(Predicate<ItemStack> predicate, boolean requireActive);
+
+	/**
+	 * @return All slots that contain the provided item
+	 */
+	default Optional<TrinketSlotAccess> findFirst(Item item, boolean requireActive) {
+		return findFirst(stack -> stack.is(item), requireActive);
+	}
+
+	/**
+	 * @return All slots that contain the provided item
+	 */
+	default Optional<TrinketSlotAccess> findFirst(TagKey<Item> tag, boolean requireActive) {
+		return findFirst(stack -> stack.is(tag), requireActive);
+	}
+
+	/**
+	 * @return All slots that contain the provided item
+	 */
+	default Optional<TrinketSlotAccess> findFirst(Item item) {
+		return findFirst(stack -> stack.is(item));
+	}
+
+	/**
+	 * @return All slots that contain the provided item
+	 */
+	default Optional<TrinketSlotAccess> findFirst(TagKey<Item> tag) {
+		return findFirst(stack -> stack.is(tag));
+	}
+
+	/**
+	 * Iterates over every slot available to the entity
+	 */
+	void forEach(BiConsumer<TrinketSlotAccess, ItemStack> consumer);
+
+	/**
+	 * Iterates over every slot available of the entity as long as it returns true.
+	 */
+	void forEachWhileTrue(BiPredicate<TrinketSlotAccess, ItemStack> consumer);
+
+	/**
+	 * Iterates over every slot available to the entity
+	 */
+	void forEach(Consumer<TrinketSlotAccess> consumer);
+
+	/**
+	 * Iterates over every slot available of the entity as long as it returns true.
+	 */
+	void forEachWhileTrue(Predicate<TrinketSlotAccess> consumer);
+
+    boolean canApplyEffects(ItemStack itemStack, TrinketSlotAccess trinketSlotAccess);
+
+	/**
+	 * Iterates over every slot available of the entity as long as it is visible / should be rendered.
+	 */
+	void forEachVisible(BiConsumer<TrinketSlotAccess, ItemStack> consumer);
+
+	/**
+	 * Iterates over every slot available of the entity as long as it should drop when killed.
+	 * Intended for grave mods an alike.
+	 */
+	void forEachDroppable(BiConsumer<TrinketSlotAccess, ItemStack> consumer, boolean keepInventory);
+
+	/**
+	 * Iterates over every slot available of the entity as long as it should drop when killed.
+	 * Intended for grave mods an alike.
+	 */
+	void forEachDroppable(BiConsumer<TrinketSlotAccess, ItemStack> consumer);
+
+	/**
+	 * @return A map of slot group names, to slot names, to trinket inventories
+	 * for the entity. Inventories will respect EAM slot count modifications for
+	 * the entity.
+	 */
+	@Deprecated(forRemoval = true)
+	Map<String, Map<String, TrinketInventory>> getInventory();
+}

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "elytraslot",
+  "version": "${version}",
+  "name": "Elytra Slot",
+  "description": "Adds an accessory slot for the elytra, so you can fly and wear chest armor at the same time.",
+  "authors": [
+    "Illusive Soulworks"
+  ],
+  "contact": {
+    "sources": "https://github.com/illusivesoulworks/elytraslot",
+    "issues": "https://github.com/illusivesoulworks/elytraslot/issues"
+  },
+  "license": "LGPL-3.0-or-later",
+  "icon": "elytraslot_icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.illusivesoulworks.elytraslot.ElytraSlotFabricMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.0",
+    "fabric-api": "*",
+    "trinkets": ">=4.1.0",
+    "minecraft": "26.2.x",
+    "java": ">=25"
+  }
+}
